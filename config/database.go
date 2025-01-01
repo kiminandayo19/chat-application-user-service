@@ -16,7 +16,7 @@ func NewDbConnection() *gorm.DB {
 	}
 	dsn := "host=" + env.DB_HOST + " user=" + env.DB_USERNAME + " password=" + env.DB_PASS + " dbname=" + env.DB_NAME + " port=" + strconv.Itoa(env.DB_PORT) + " sslmode=disable TimeZone=Asia/Jakarta"
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true})
 
 	if err != nil {
 		log.Fatal("[db] - Postgres failed connection, reason:", err)

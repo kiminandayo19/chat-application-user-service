@@ -2,8 +2,10 @@ package routes
 
 import (
 	"chat-application/users/api/middlewares"
+	"chat-application/users/api/services/impl"
 	"chat-application/users/config"
 	"chat-application/users/internal/domain"
+	"chat-application/users/internal/domain/repositories"
 	"log"
 	"net/http"
 
@@ -28,12 +30,14 @@ func NewRoute() *gin.Engine {
 	}
 
 	db := config.NewDbConnection()
+	repo := repositories.NewAuthRepository(db)
+	authService := impl.NewAuthService(repo)
 
 	router := gin.Default()
 	router.Use(middlewares.HeaderMiddleware(nil))
 
 	basePath := "/v1/" + env.APP_ENTRY
-	authRoute := NewAuthRoute(db, &env)
+	authRoute := NewAuthRoute(authService)
 
 	v1 := router.Group(basePath)
 	{

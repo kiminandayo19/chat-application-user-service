@@ -18,13 +18,13 @@ type RefreshTokenRequestPayload struct {
 }
 
 type ForgotPasswordRequestPayload struct {
-	Id              string `json:"id" validate:"required"`
-	Password        string `json:"password" validate:"required,min=6,max=20,alphanum"`
-	ConfirmPassword string `json:"confirmPassword" validate:"required,min=6,max=20,alphanum,eqfield=password"`
+	UserId          interface{} `json:"userId" validate:"required,numeric"`
+	Password        string      `json:"password" validate:"required,min=6,max=20,alphanum"`
+	ConfirmPassword string      `json:"confirmPassword" validate:"required,min=6,max=20,alphanum,eqfield=Password"`
 }
 
 type DeleteAccountRequestPayload struct {
-	UserId string `form:"userId" validate:"required,numeric"`
+	UserId interface{} `form:"userId" validate:"required,numeric"`
 }
 
 // Responses
