@@ -23,9 +23,8 @@ func (r *AuthRoute) Setup(rg *gin.RouterGroup) {
 	{
 		auth.POST("/register", r.userController.RegisterController)
 		auth.POST("/login", r.userController.LoginController)
-		// auth.POST("/login", r.userService.Login)
-		// auth.POST("/refresh-token", r.userService.RefreshToken)
-		// auth.POST("/update-password", r.userService.UpdatePassword)
-		// auth.DELETE("/delete-user", r.userService.Delete)
+		auth.POST("/refresh-token", r.userController.RefreshTokenController)
+		// auth.POST("/update-password", r.userController.ChangePasswordController)
+		// auth.DELETE("/delete-account", r.userController.DeleteAccountController)
 	}
 }

@@ -3,12 +3,9 @@ package impl
 import (
 	"chat-application/users/api/controllers"
 	"chat-application/users/api/services"
-	"chat-application/users/internal/domain"
-	"chat-application/users/internal/domain/dtos"
-	"net/http"
+	"chat-application/users/pkg/handler"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 type authControllerImpl struct {
@@ -22,56 +19,27 @@ func NewAuthControllerImpl(authService services.AuthServiceInterface) controller
 }
 
 func (c *authControllerImpl) RegisterController(ctx *gin.Context) {
-	var registerPayload dtos.RegisterRequestPayload
-
-	if err := ctx.BindJSON(&registerPayload); err != nil {
-		response := domain.NewResponse(http.StatusBadRequest, false, "Invalid Request Body", nil)
-		ctx.AbortWithStatusJSON(response.Code, response)
-		return
-	}
-
-	validate := validator.New()
-
-	err := validate.Struct(registerPayload)
-	if err != nil {
-		errValidation := err.(validator.ValidationErrors)
-		response := domain.NewResponse(http.StatusBadRequest, false, errValidation[0].Error(), nil)
-		ctx.AbortWithStatusJSON(response.Code, response)
-		return
-	}
-
-	response := c.authService.Register(ctx.Request.Context(), registerPayload)
-
-	ctx.JSON(response.Code, response)
+	handler.JSONController(c.authService.Register)(ctx)
 	return
 }
 
 func (c *authControllerImpl) LoginController(ctx *gin.Context) {
-	var loginPayload dtos.LoginRequestPayload
-
-	if err := ctx.BindJSON(&loginPayload); err != nil {
-		response := domain.NewResponse(http.StatusBadRequest, false, "Invalid Request Body", nil)
-		ctx.AbortWithStatusJSON(response.Code, response)
-		return
-	}
-
-	validate := validator.New()
-	err := validate.Struct(loginPayload)
-	if err != nil {
-		errValidation := err.(validator.ValidationErrors)
-		response := domain.NewResponse(http.StatusBadRequest, false, errValidation[0].Error(), nil)
-		ctx.AbortWithStatusJSON(response.Code, response)
-		return
-	}
-
-	response := c.authService.Login(ctx.Request.Context(), loginPayload)
-
-	ctx.JSON(response.Code, response)
+	// equivalent to handler := ...; handler(ctx)
+	handler.JSONController(c.authService.Login)(ctx)
 	return
 }
 
-func (c *authControllerImpl) RefreshTokenController(ctx *gin.Context) {}
+func (c *authControllerImpl) RefreshTokenController(ctx *gin.Context) {
+	handler.JSONController(c.authService.RefreshToken)(ctx)
+	return
+}
 
-func (c *authControllerImpl) ChangePasswordController(ctx *gin.Context) {}
-
-func (c *authControllerImpl) DeleteAccountController(ctx *gin.Context) {}
+// func (c *authControllerImpl) ChangePasswordController(ctx *gin.Context) {
+// 	handler.JSONController(c.authService.ChangePassword)(ctx)
+// 	return
+// }
+//
+// func (c *authControllerImpl) DeleteAccountController(ctx *gin.Context) {
+// 	handler.QueryController(c.authService.Delete)(ctx)
+// 	return
+// }
