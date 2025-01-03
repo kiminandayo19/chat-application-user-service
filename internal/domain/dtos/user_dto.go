@@ -17,7 +17,7 @@ type RefreshTokenRequestPayload struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
-type ForgotPasswordRequestPayload struct {
+type ChangePasswordRequestPayload struct {
 	UserId          interface{} `json:"userId" validate:"required,numeric"`
 	Password        string      `json:"password" validate:"required,min=6,max=20,alphanum"`
 	ConfirmPassword string      `json:"confirmPassword" validate:"required,min=6,max=20,alphanum,eqfield=Password"`

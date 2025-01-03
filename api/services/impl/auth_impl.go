@@ -14,6 +14,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	jwts "github.com/golang-jwt/jwt/v5"
@@ -164,8 +165,64 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, payload dto.RefreshT
 	return domain.NewResponse(http.StatusOK, true, "Success", response)
 }
 
-// func (s *authServiceImpl) ChangePassword(ctx context.Context, payload dto.ForgotPasswordRequestPayload) domain.APIBaseResponse {
-// }
-//
-// func (s *authServiceImpl) Delete(ctx context.Context, payload dto.DeleteAccountRequestPayload) domain.APIBaseResponse {
-// }
+func (s *authServiceImpl) ChangePassword(ctx context.Context, payload dto.ChangePasswordRequestPayload) domain.APIBaseResponse {
+	if ctx.Err() != nil {
+		return domain.NewResponse(http.StatusBadRequest, false, "Bad Request", nil)
+	}
+
+	utilsHelper := utils.NewUtils()
+
+	user := &models.Mst_users{
+		ID: uint(payload.UserId.(float64)),
+	}
+
+	find, err := s.repo.FindByID(ctx, user)
+	if err != nil {
+		code := http.StatusInternalServerError
+		if err.Error() == repo.ErrRecordNotFound {
+			code = http.StatusBadRequest
+		}
+		return domain.NewResponse(code, false, err.Error(), nil)
+	}
+
+	if err := utilsHelper.ComparePassword(find.Password, payload.Password); err == nil {
+		return domain.NewResponse(http.StatusBadRequest, false, "New Password is the same as old password, choose different one.", nil)
+	}
+
+	hashPassword, err := utilsHelper.HashPassword(payload.Password)
+	if err != nil {
+		return domain.NewResponse(http.StatusInternalServerError, false, "Failed to hash password", nil)
+	}
+
+	if err := s.repo.UpdateById(ctx, find.ID, "password", hashPassword); err != nil {
+		code := http.StatusInternalServerError
+		if err.Error() == repo.ErrRecordNotFound {
+			code = http.StatusBadRequest
+		}
+		return domain.NewResponse(code, false, err.Error(), nil)
+	}
+
+	return domain.NewResponse(http.StatusOK, true, "Success Update Password", nil)
+}
+
+func (s *authServiceImpl) Delete(ctx context.Context, payload dto.DeleteAccountRequestPayload) domain.APIBaseResponse {
+	if ctx.Err() != nil {
+		return domain.NewResponse(http.StatusBadRequest, false, "Bad Request", nil)
+	}
+	userId, _ := strconv.Atoi(payload.UserId.(string))
+
+	if err := s.repo.UpdateById(ctx, uint(userId), "is_deleted", true); err != nil {
+		code := http.StatusInternalServerError
+		message := err.Error()
+		switch {
+		case err.Error() == repo.ErrRecordNotFound:
+			code = http.StatusBadRequest
+		case err.Error() == repo.ErrNotUpdated:
+			code = http.StatusBadRequest
+			message = "Account already deleted."
+		}
+		return domain.NewResponse(code, false, message, nil)
+	}
+
+	return domain.NewResponse(http.StatusOK, true, "Success Delete Account", nil)
+}

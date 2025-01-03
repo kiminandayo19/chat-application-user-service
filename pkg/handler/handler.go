@@ -3,6 +3,7 @@ package handler
 import (
 	"chat-application/users/internal/domain"
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -35,15 +36,9 @@ func JSONController[T any](service serviceFn[T]) gin.HandlerFunc {
 	}
 }
 
-func QueryController[T any](service serviceFn[T]) gin.HandlerFunc {
+func QueryController[T any](service serviceFn[T], payload T) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var payload T
-
-		if err := ctx.BindQuery(&payload); err != nil {
-			response := domain.NewResponse(http.StatusBadRequest, false, "Invalid Query Params", nil)
-			ctx.AbortWithStatusJSON(response.Code, response)
-			return
-		}
+		log.Println("Masuk Yah")
 
 		validate := validator.New()
 		if err := validate.Struct(&payload); err != nil {
