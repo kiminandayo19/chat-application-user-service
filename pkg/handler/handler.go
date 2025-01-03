@@ -3,7 +3,6 @@ package handler
 import (
 	"chat-application/users/internal/domain"
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +37,6 @@ func JSONController[T any](service serviceFn[T]) gin.HandlerFunc {
 
 func QueryController[T any](service serviceFn[T], payload T) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		log.Println("Masuk Yah")
 
 		validate := validator.New()
 		if err := validate.Struct(&payload); err != nil {

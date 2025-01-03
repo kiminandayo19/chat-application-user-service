@@ -30,19 +30,25 @@ func NewRoute() *gin.Engine {
 	}
 
 	db := config.NewDbConnection()
-	repo := repositories.NewAuthRepository(db)
-	authService := impl.NewAuthService(repo)
+
+	authRepo := repositories.NewAuthRepository(db)
+	userRepo := repositories.NewUserRepository(db)
+
+	authService := impl.NewAuthService(authRepo)
+	userService := impl.NewUserService(userRepo)
 
 	router := gin.Default()
 	router.Use(middlewares.HeaderMiddleware(nil))
 
 	basePath := "/v1/" + env.APP_ENTRY
 	authRoute := NewAuthRoute(authService)
+	userRoute := NewUserRoute(userService)
 
 	v1 := router.Group(basePath)
 	{
 		v1.GET("/", welcomeHandler)
 		authRoute.Setup(v1)
+		userRoute.Setup(v1)
 	}
 
 	return router

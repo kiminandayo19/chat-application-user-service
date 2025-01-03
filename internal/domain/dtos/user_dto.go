@@ -27,6 +27,11 @@ type DeleteAccountRequestPayload struct {
 	UserId interface{} `form:"userId" validate:"required,numeric"`
 }
 
+type PaginatedRequestPayload struct {
+	Page  int `form:"page" validate:"required,numeric"`
+	Limit int `form:"limit" validate:"required,numeric"`
+}
+
 // Responses
 type LoginResponsePayload struct {
 	UserId       string `json:"userId"`
@@ -39,4 +44,12 @@ type LoginResponsePayload struct {
 
 type RefreshTokenResponsePayload struct {
 	AccessToken string `json:"accessToken"`
+}
+
+type GetAllUserResponsePayload struct {
+	ID          string `json:"userId"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
+	Phonenumber string `json:"phonenumber"`
+	IsActive    bool   `json:"isActive"`
 }

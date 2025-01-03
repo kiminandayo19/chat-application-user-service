@@ -9,22 +9,22 @@ import (
 )
 
 type AuthRoute struct {
-	userController controllers.AuthControllerInterface
+	authController controllers.AuthControllerInterface
 }
 
 func NewAuthRoute(authService services.AuthServiceInterface) *AuthRoute {
 	return &AuthRoute{
-		userController: cImpl.NewAuthControllerImpl(authService),
+		authController: cImpl.NewAuthControllerImpl(authService),
 	}
 }
 
 func (r *AuthRoute) Setup(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	{
-		auth.POST("/register", r.userController.RegisterController)
-		auth.POST("/login", r.userController.LoginController)
-		auth.POST("/refresh-token", r.userController.RefreshTokenController)
-		auth.POST("/change-password", r.userController.ChangePasswordController)
-		auth.DELETE("/delete-account", r.userController.DeleteAccountController)
+		auth.POST("/register", r.authController.RegisterController)
+		auth.POST("/login", r.authController.LoginController)
+		auth.POST("/refresh-token", r.authController.RefreshTokenController)
+		auth.POST("/change-password", r.authController.ChangePasswordController)
+		auth.DELETE("/delete-account", r.authController.DeleteAccountController)
 	}
 }

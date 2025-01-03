@@ -1,104 +1,44 @@
 package repositories
 
 import (
+	"chat-application/users/internal/domain/dtos"
 	"chat-application/users/internal/domain/models"
+	"chat-application/users/pkg/database"
 	"context"
 	"errors"
 
 	"gorm.io/gorm"
 )
 
-const (
-	ErrDuplicatedKey  = "Username or email or phonenumber is already exists."
-	ErrRecordNotFound = "User doesn't exists."
-	ErrNotUpdated     = "Value is the same"
-	ErrDbError        = "Failed to process data"
-)
-
-type AuthRepository interface {
-	Insert(ctx context.Context, user *models.Mst_users) error
-	FindByUsername(ctx context.Context, user *models.Mst_users) (models.Mst_users, error)
-	FindByID(ctx context.Context, user *models.Mst_users) (models.Mst_users, error)
-	UpdateById(ctx context.Context, id uint, columnName string, updateData interface{}) error
+type UserRepository interface {
+	GetAll(ctx context.Context, page int, limit int) ([]dtos.GetAllUserResponsePayload, int64, error)
 }
 
-type authRepository struct {
+type userRepository struct {
 	db *gorm.DB
 }
 
-func NewAuthRepository(db *gorm.DB) AuthRepository {
-	return &authRepository{
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{
 		db: db,
 	}
 }
 
-func (r *authRepository) Insert(ctx context.Context, user *models.Mst_users) error {
+func (r *userRepository) GetAll(ctx context.Context, page int, limit int) ([]dtos.GetAllUserResponsePayload, int64, error) {
+	var users []dtos.GetAllUserResponsePayload
+	var count int64
 	result := r.db.
 		WithContext(ctx).
 		Model(&models.Mst_users{}).
-		Create(user)
+		Select("id", "username", "phonenumber", "email", "is_online").
+		Where("is_deleted", false).
+		Count(&count).
+		Scopes(database.Paginate(page, limit)).
+		Find(&users)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			return errors.New(ErrDuplicatedKey)
-		}
-		return errors.New(ErrDbError)
-	}
-	return nil
-}
-
-func (r *authRepository) FindByUsername(ctx context.Context, user *models.Mst_users) (models.Mst_users, error) {
-	var find models.Mst_users
-	result := r.db.
-		WithContext(ctx).
-		Model(&models.Mst_users{}).
-		Where("username = ?", user.Username).
-		First(&find)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return models.Mst_users{}, errors.New(ErrRecordNotFound)
-		}
-		return models.Mst_users{}, errors.New(ErrDbError)
-	}
-	return find, nil
-}
-
-func (r *authRepository) FindByID(ctx context.Context, user *models.Mst_users) (models.Mst_users, error) {
-	var find models.Mst_users
-	result := r.db.
-		WithContext(ctx).
-		Model(&models.Mst_users{}).
-		First(&find, user.ID)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return models.Mst_users{}, errors.New(ErrRecordNotFound)
-		}
-		return models.Mst_users{}, errors.New(ErrDbError)
-	}
-	return find, nil
-}
-
-func (r *authRepository) UpdateById(ctx context.Context, id uint, columnName string, updateData interface{}) error {
-	var find models.Mst_users
-	result := r.db.
-		WithContext(ctx).
-		Model(&models.Mst_users{}).
-		Where("id = ?", id).
-		First(&find)
-
-	if find.IsDeleted {
-		return errors.New(ErrNotUpdated)
+		return []dtos.GetAllUserResponsePayload{}, 0, errors.New(ErrDbError)
 	}
 
-	result.Update(columnName, updateData)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return errors.New(ErrRecordNotFound)
-		}
-		return errors.New(ErrDbError)
-	}
-	return nil
+	return users, count, nil
 }
