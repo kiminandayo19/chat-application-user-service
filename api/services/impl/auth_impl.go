@@ -18,15 +18,18 @@ import (
 	"time"
 
 	jwts "github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 )
 
 type authServiceImpl struct {
 	repo repo.AuthRepository
+	rdb  *redis.Client
 }
 
-func NewAuthService(repo repo.AuthRepository) services.AuthServiceInterface {
+func NewAuthService(repo repo.AuthRepository, rdb *redis.Client) services.AuthServiceInterface {
 	return &authServiceImpl{
 		repo: repo,
+		rdb:  rdb,
 	}
 }
 
@@ -101,6 +104,12 @@ func (s *authServiceImpl) Login(ctx context.Context, payload dto.LoginRequestPay
 		return domain.NewResponse(http.StatusInternalServerError, false, "Internal Server Error. Failed to generate jwt", nil)
 	}
 
+	redisErr := s.rdb.Set(ctx, "access-"+utilsHelper.UintToString(find.ID), accessToken, 15*time.Minute).Err()
+	redisErr = s.rdb.Set(ctx, "refresh-"+utilsHelper.UintToString(find.ID), refreshToken, 24*7*time.Hour).Err()
+	if redisErr != nil {
+		return domain.NewResponse(http.StatusInternalServerError, false, "Internal Server Error", nil)
+	}
+
 	response := dto.LoginResponsePayload{
 		UserId:       utilsHelper.UintToString(find.ID),
 		Username:     find.Username,
@@ -128,6 +137,7 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, payload dto.RefreshT
 	refreshHelper := jwt.NewJWTHelper(env.JWT_SECRET, 24*7*time.Hour)
 
 	decodeData, err := refreshHelper.ValidateToken(payload.RefreshToken)
+	err = s.rdb.Get(ctx, "refresh-"+decodeData.UserId).Err()
 	if err != nil {
 		switch {
 		case errors.Is(err, jwts.ErrTokenExpired):
@@ -157,6 +167,11 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, payload dto.RefreshT
 	accessToken, err := accessHelper.GenerateToken(utilsHelper.UintToString(find.ID), find.Username)
 	if err != nil {
 		return domain.NewResponse(http.StatusInternalServerError, false, "Internal Server Error. Failed to generate jwt", nil)
+	}
+
+	err = s.rdb.Set(ctx, "access-"+utilsHelper.UintToString(find.ID), accessToken, 0).Err()
+	if err != nil {
+		return domain.NewResponse(http.StatusInternalServerError, false, "Internal Server Error", nil)
 	}
 
 	response := dtos.RefreshTokenResponsePayload{
@@ -225,4 +240,32 @@ func (s *authServiceImpl) Delete(ctx context.Context, payload dto.DeleteAccountR
 	}
 
 	return domain.NewResponse(http.StatusOK, true, "Success Delete Account", nil)
+}
+
+func (s *authServiceImpl) Logout(ctx context.Context, payload dto.LogoutRequestPayload) domain.APIBaseResponse {
+	if ctx.Err() != nil {
+		return domain.NewResponse(http.StatusBadRequest, false, "Bad Request", nil)
+	}
+	userId, _ := strconv.Atoi(payload.UserId.(string))
+
+	user := &models.Mst_users{
+		ID: uint(userId),
+	}
+
+	find, err := s.repo.FindByID(ctx, user)
+	if err != nil {
+		code := http.StatusInternalServerError
+		if err.Error() == repo.ErrRecordNotFound {
+			code = http.StatusBadRequest
+		}
+		return domain.NewResponse(code, false, err.Error(), nil)
+	}
+
+	rdbErr := s.rdb.GetDel(ctx, "access-"+utils.NewUtils().UintToString(find.ID)).Err()
+	rdbErr = s.rdb.GetDel(ctx, "refresh-"+utils.NewUtils().UintToString(find.ID)).Err()
+	if rdbErr != nil {
+		return domain.NewResponse(http.StatusInternalServerError, false, "Internal Server Error", nil)
+	}
+
+	return domain.NewResponse(http.StatusOK, true, "Success", nil)
 }

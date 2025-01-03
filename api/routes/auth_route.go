@@ -26,5 +26,6 @@ func (r *AuthRoute) Setup(rg *gin.RouterGroup) {
 		auth.POST("/refresh-token", r.authController.RefreshTokenController)
 		auth.POST("/change-password", r.authController.ChangePasswordController)
 		auth.DELETE("/delete-account", r.authController.DeleteAccountController)
+		auth.GET("/logout", r.authController.LogoutController)
 	}
 }

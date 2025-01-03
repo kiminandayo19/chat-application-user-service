@@ -27,6 +27,10 @@ type DeleteAccountRequestPayload struct {
 	UserId interface{} `form:"userId" validate:"required,numeric"`
 }
 
+type LogoutRequestPayload struct {
+	UserId interface{} `form:"userId" validate:"required,numeric"`
+}
+
 type PaginatedRequestPayload struct {
 	Page  int `form:"page" validate:"required,numeric"`
 	Limit int `form:"limit" validate:"required,numeric"`

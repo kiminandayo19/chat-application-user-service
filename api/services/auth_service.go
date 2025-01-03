@@ -12,4 +12,5 @@ type AuthServiceInterface interface {
 	RefreshToken(ctx context.Context, payload dto.RefreshTokenRequestPayload) domain.APIBaseResponse
 	ChangePassword(ctx context.Context, payload dto.ChangePasswordRequestPayload) domain.APIBaseResponse
 	Delete(ctx context.Context, payload dto.DeleteAccountRequestPayload) domain.APIBaseResponse
+	Logout(ctx context.Context, payload dto.LogoutRequestPayload) domain.APIBaseResponse
 }

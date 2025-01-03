@@ -8,4 +8,5 @@ type AuthControllerInterface interface {
 	RefreshTokenController(ctx *gin.Context)
 	ChangePasswordController(ctx *gin.Context)
 	DeleteAccountController(ctx *gin.Context)
+	LogoutController(ctx *gin.Context)
 }

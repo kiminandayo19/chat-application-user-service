@@ -20,6 +20,9 @@ type EnvDevType struct {
 	DB_USERNAME string
 	APIKEY      string
 	JWT_SECRET  string
+	REDIS_ADDR  string
+	REDIS_PASS  string
+	REDIS_DB    int
 }
 
 func NewEnvDev() (EnvDevType, error) {
@@ -44,6 +47,10 @@ func NewEnvDev() (EnvDevType, error) {
 
 	env.APIKEY = os.Getenv("API_KEY")
 	env.JWT_SECRET = os.Getenv("JWT_SECRET")
+
+	env.REDIS_ADDR = os.Getenv("REDIS_ADDR")
+	env.REDIS_PASS = os.Getenv("REDIS_PASS")
+	env.REDIS_DB, err = strconv.Atoi(os.Getenv("REDIS_DB"))
 
 	log.Print("[env] - Success to load development env")
 	return env, err

@@ -30,11 +30,12 @@ func NewRoute() *gin.Engine {
 	}
 
 	db := config.NewDbConnection()
+	rdb := config.NewRedisClient(env)
 
 	authRepo := repositories.NewAuthRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 
-	authService := impl.NewAuthService(authRepo)
+	authService := impl.NewAuthService(authRepo, rdb)
 	userService := impl.NewUserService(userRepo)
 
 	router := gin.Default()

@@ -23,23 +23,19 @@ func NewAuthControllerImpl(authService services.AuthServiceInterface) controller
 
 func (c *authControllerImpl) RegisterController(ctx *gin.Context) {
 	handler.JSONController(c.authService.Register)(ctx)
-	return
 }
 
 func (c *authControllerImpl) LoginController(ctx *gin.Context) {
 	// equivalent to handler := ...; handler(ctx)
 	handler.JSONController(c.authService.Login)(ctx)
-	return
 }
 
 func (c *authControllerImpl) RefreshTokenController(ctx *gin.Context) {
 	handler.JSONController(c.authService.RefreshToken)(ctx)
-	return
 }
 
 func (c *authControllerImpl) ChangePasswordController(ctx *gin.Context) {
 	handler.JSONController(c.authService.ChangePassword)(ctx)
-	return
 }
 
 func (c *authControllerImpl) DeleteAccountController(ctx *gin.Context) {
@@ -53,5 +49,16 @@ func (c *authControllerImpl) DeleteAccountController(ctx *gin.Context) {
 	}
 
 	handler.QueryController(c.authService.Delete, payload)(ctx)
-	return
+}
+
+func (c *authControllerImpl) LogoutController(ctx *gin.Context) {
+	payload := dtos.LogoutRequestPayload{
+		UserId: ctx.Request.URL.Query().Get("userId"),
+	}
+
+	if payload.UserId == nil {
+		response := domain.NewResponse(http.StatusBadRequest, false, "Invalid Query Params", nil)
+		ctx.AbortWithStatusJSON(response.Code, response)
+	}
+	handler.QueryController(c.authService.Logout, payload)(ctx)
 }
